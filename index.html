@@ -3,80 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <title>HawiApp Feed</title>
-
-<link rel="manifest" href="manifest.json">
-
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
 
 <style>
-
-/* =========================
-   RESET
-========================= */
+:root {
+  --bg-dark: #0a0612;
+  --accent-red: #ff2a4b;
+  --glass: rgba(255, 255, 255, 0.05);
+}
 
 html, body {
   height: 100%;
   margin: 0;
-  font-family: sans-serif;
-  background: #0a0612;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg-dark);
   color: white;
+  overflow: hidden; 
 }
 
-/* =========================
-   BACKGROUND (CYBER ALPEN)
-========================= */
-
+/* Cyber Alpen Hintergrund */
 body::before {
   content:"";
   position: fixed;
   inset: 0;
   background: url("watermarked_img_12867647719775911672.png") center/cover no-repeat;
-  opacity: 0.18;
+  opacity: 0.25;
   z-index: -2;
 }
 
-body::after {
-  content:"";
-  position: fixed;
-  inset: 0;
-  background: rgba(10,6,18,0.55);
-  z-index: -1;
-}
-
-/* =========================
-   APP LAYOUT FIX
-========================= */
-
 .app {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* =========================
-   HEADER
-========================= */
-
+/* Header */
 header {
-  height: 60px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  background: rgba(10,6,18,0.75);
-  backdrop-filter: blur(12px);
-
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 15px;
+  text-align: center;
+  background: rgba(10,6,18,0.7);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 header img {
   height: 38px;
 }
 
-/* =========================
-   FEED (FIXED FLEX)
-========================= */
-
+/* Feed */
 #feed {
   flex: 1;
   overflow-y: auto;
@@ -84,150 +58,98 @@ header img {
 }
 
 .post {
-  background: rgba(24,18,36,0.70);
-  backdrop-filter: blur(12px);
-
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 14px;
-
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(24,18,36,0.8);
+  backdrop-filter: blur(15px);
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* =========================
-   WHATSAPP INPUT (100% FIX)
-========================= */
-
+/* Komponier-Bereich - Optimiert für Mobile */
 #composer {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 8px;
-
   padding: 10px;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom));
-
-  background: rgba(10,6,18,0.92);
-  backdrop-filter: blur(14px);
-
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  background: rgba(10,6,18,0.95);
   border-top: 1px solid rgba(255,255,255,0.1);
 }
 
-/* TEXTAREA FIX (NO RESIZE BUG) */
 #postContent {
   flex: 1;
   height: 42px;
-
   resize: none;
-  overflow: hidden;
-
   border: none;
   outline: none;
-
   border-radius: 22px;
-  padding: 10px 14px;
-
+  padding: 12px 16px;
   font-size: 14px;
-
   background: rgba(255,255,255,0.08);
   color: white;
 }
 
-/* SEND BUTTON FIX (NO CUT OFF EVER) */
 #composer button {
   width: 46px;
   height: 46px;
   flex-shrink: 0;
-
   border-radius: 50%;
   border: none;
-
-  background: #ff2a4b;
+  background: var(--accent-red);
   color: white;
   font-size: 18px;
-
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
-
-/* =========================
-   MOBILE SAFETY FIX
-========================= */
-
-@supports (-webkit-touch-callout: none) {
-  #composer {
-    padding-bottom: calc(10px + env(safe-area-inset-bottom));
-  }
-}
-
 </style>
 </head>
 
 <body>
 
 <div class="app">
+  <header>
+    <img src="banner_logo.PNG" alt="HawiApp">
+  </header>
 
-<header>
-  <img src="banner_logo.PNG" alt="HawiApp">
-</header>
+  <div id="feed"></div>
 
-<div id="feed"></div>
-
-<div id="composer">
-  <textarea id="postContent" placeholder="Nachricht schreiben..."></textarea>
-  <button onclick="createPost()">➤</button>
-</div>
-
+  <div id="composer">
+    <textarea id="postContent" placeholder="Nachricht schreiben..."></textarea>
+    <button onclick="createPost()">➤</button>
+  </div>
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <script>
-
 const supabaseClient = supabase.createClient(
   "https://hyervxfeoxojlqlgasvn.supabase.co",
   "sb_publishable_skyTnFKezDqaz53FD8pTTQ_fpvSTSLi"
 );
 
-/* =========================
-   SESSION CHECK
-========================= */
-
 async function checkSession() {
-  const { data: { session } } =
-    await supabaseClient.auth.getSession();
-
+  const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session || !session.user) {
     window.location.href = "login.html";
     return;
   }
-
   loadPosts();
 }
 
 checkSession();
 
-/* =========================
-   CREATE POST
-========================= */
-
 async function createPost() {
-
   const content = document.getElementById("postContent").value;
-
   if (!content.trim()) return;
 
-  const { data: { session } } =
-    await supabaseClient.auth.getSession();
-
+  const { data: { session } } = await supabaseClient.auth.getSession();
   const { error } = await supabaseClient
     .from("posts")
-    .insert([
-      {
-        content,
-        user_id: session.user.id
-      }
-    ]);
+    .insert([{ content, user_id: session.user.id }]);
 
   if (error) {
     alert(error.message);
@@ -238,12 +160,7 @@ async function createPost() {
   loadPosts();
 }
 
-/* =========================
-   LOAD POSTS
-========================= */
-
 async function loadPosts() {
-
   const { data } = await supabaseClient
     .from("posts")
     .select("*")
@@ -257,14 +174,11 @@ async function loadPosts() {
       <div class="post">
         <b>User</b>
         <p>${post.content}</p>
-        <small style="opacity:0.6">
-          ${new Date(post.created_at).toLocaleString()}
-        </small>
+        <small style="opacity:0.6">${new Date(post.created_at).toLocaleString()}</small>
       </div>
     `;
   });
 }
-
 </script>
 
 </body>
