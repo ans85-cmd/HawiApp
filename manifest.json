@@ -9,7 +9,7 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
+  "start_url": "https://ans85-cmd.github.io/HawiApp/",
   "background_color": "#121118",
   "theme_color": "#ff3344",
   "display": "standalone",
