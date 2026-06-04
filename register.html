@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Register - HawiApp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<style>
+body {
+  margin:0;
+  font-family: sans-serif;
+  background:#0a0612;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.card {
+  background:rgba(24,18,36,0.9);
+  padding:25px;
+  border-radius:16px;
+  width:90%;
+  max-width:380px;
+}
+input {
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  border:none;
+}
+button {
+  width:100%;
+  padding:10px;
+  background:#ff2a4b;
+  border:none;
+  color:white;
+  font-weight:bold;
+  border-radius:8px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>🚀 Register</h2>
+
+  <input id="email" placeholder="Email">
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Passwort">
+
+  <button onclick="register()">Account erstellen</button>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseUrl = "https://hyervxfeoxojlqlgasvn.supabase.co/rest/v1/";
+const supabaseKey = "sb_publishable_skyTnFKezDqaz53FD8pTTQ_fpvSTSLi";
+
+const supabaseClient = supabase.createClient(
+  "https://hyervxfeoxojlqlgasvn.supabase.co",
+  "sb_publishable_skyTnFKezDqaz53FD8pTTQ_fpvSTSLi"
+);
+
+async function register() {
+
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const username = document.getElementById("username").value;
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) return alert(error.message);
+
+  await supabaseClient.from("profiles").insert([
+    {
+      id: data.user.id,
+      username
+    }
+  ]);
+
+  alert("Account erstellt!");
+  window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>
