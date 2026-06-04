@@ -19,21 +19,35 @@ header {
   border-bottom:1px solid #333;
 }
 
-.post {
-  background:rgba(24,18,36,0.8);
-  margin:10px;
+#composer {
+  padding:15px;
+}
+
+textarea {
+  width:100%;
   padding:10px;
   border-radius:10px;
+  border:none;
+  height:80px;
+  resize:none;
 }
 
 button {
-  margin:10px;
+  margin-top:10px;
   padding:10px;
+  width:100%;
   background:#ff2a4b;
   border:none;
   color:white;
   border-radius:8px;
   cursor:pointer;
+}
+
+.post {
+  background:rgba(24,18,36,0.8);
+  margin:10px;
+  padding:10px;
+  border-radius:10px;
 }
 </style>
 </head>
@@ -44,11 +58,17 @@ button {
   🚀 HawiApp Feed
 </header>
 
+<!-- POST CREATOR -->
+<div id="composer">
+  <textarea id="postContent" placeholder="Was geht?"></textarea>
+  <button onclick="createPost()">Posten</button>
+</div>
+
+<!-- FEED -->
 <div id="feed"></div>
 
 <button onclick="logout()">Logout</button>
 
-<!-- Supabase -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <script>
@@ -63,53 +83,59 @@ const supabaseClient = supabase.createClient(
 );
 
 /* =========================
-   STABILE SESSION PRÜFUNG
+   SESSION CHECK
 ========================= */
 
 async function checkSession() {
 
-  try {
+  const { data: { session } } =
+    await supabaseClient.auth.getSession();
 
-    const { data: { session }, error } =
-      await supabaseClient.auth.getSession();
+  console.log("SESSION:", session);
 
-    console.log("SESSION CHECK:", session);
-
-    if (error) {
-      console.error("SESSION ERROR:", error);
-      window.location.href = "login.html";
-      return;
-    }
-
-    if (!session || !session.user) {
-      console.log("NO SESSION → redirect login");
-      window.location.href = "login.html";
-      return;
-    }
-
-    console.log("LOGGED IN AS:", session.user.email);
-
-    loadPosts();
-
-  } catch (err) {
-    console.error("CHECK SESSION FAILED:", err);
+  if (!session || !session.user) {
     window.location.href = "login.html";
+    return;
   }
+
+  loadPosts();
 }
 
 checkSession();
 
 /* =========================
-   REALTIME AUTH LISTENER
+   POST ERSTELLEN
 ========================= */
 
-supabaseClient.auth.onAuthStateChange((event, session) => {
-  console.log("AUTH EVENT:", event);
+async function createPost() {
 
-  if (event === "SIGNED_OUT") {
-    window.location.href = "login.html";
+  const content = document.getElementById("postContent").value;
+
+  if (!content) return;
+
+  const { data: { session } } =
+    await supabaseClient.auth.getSession();
+
+  const user = session.user;
+
+  const { error } = await supabaseClient
+    .from("posts")
+    .insert([
+      {
+        content: content,
+        user_id: user.id
+      }
+    ]);
+
+  if (error) {
+    alert(error.message);
+    return;
   }
-});
+
+  document.getElementById("postContent").value = "";
+
+  loadPosts();
+}
 
 /* =========================
    POSTS LADEN
@@ -119,22 +145,24 @@ async function loadPosts() {
 
   const { data, error } = await supabaseClient
     .from("posts")
-    .select("*, profiles(username)")
+    .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("POST ERROR:", error);
+    console.error(error);
     return;
   }
 
   const feed = document.getElementById("feed");
   feed.innerHTML = "";
 
-  (data || []).forEach(p => {
+  (data || []).forEach(post => {
+
     feed.innerHTML += `
       <div class="post">
-        <b>${p.profiles?.username || "unknown"}</b>
-        <p>${p.content || ""}</p>
+        <b>User</b>
+        <p>${post.content}</p>
+        <small>${new Date(post.created_at).toLocaleString()}</small>
       </div>
     `;
   });
