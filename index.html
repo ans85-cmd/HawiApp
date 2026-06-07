@@ -54,37 +54,35 @@
 <script>
   const supabaseClient = supabase.createClient("https://hyervxfeoxojlqlgasvn.supabase.co", "sb_publishable_skyTnFKezDqaz53FD8pTTQ_fpvSTSLi");
 async function loadPosts() {
-  const { data } = await supabaseClient
+  const feed = document.getElementById("feed");
+  
+  // 1. Einfachster Test: Nur Posts laden (ohne Join)
+  const { data, error } = await supabaseClient
     .from("posts")
-    .select(`
-      *,
-      profiles (
-        username,
-        avatar_url
-      )
-    `)
+    .select("*")
     .order("created_at", { ascending: false });
 
-  const feed = document.getElementById("feed");
+  if (error) {
+    console.error("DEBUG FEHLER:", error);
+    feed.innerHTML = `<p style="color:red">Fehler: ${error.message}</p>`;
+    return;
+  }
+
   feed.innerHTML = "";
+  
+  if (!data || data.length === 0) {
+    feed.innerHTML = "<p>Keine Nachrichten gefunden.</p>";
+    return;
+  }
 
-  (data || []).forEach(post => {
-    // Wenn avatar_url leer ist, generieren wir einen Avatar mit den Initialen des Users
-    const username = post.profiles?.username || "Gast";
-    const avatar = post.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=ff2a4b&color=fff`;
-
+  // 2. Daten anzeigen
+  data.forEach(post => {
     feed.innerHTML += `
       <div class="post">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-          <img src="${avatar}" style="width: 35px; height: 35px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1);">
-          <b style="font-size: 0.9em; color: #fff;">${username}</b>
-        </div>
-        <p style="margin: 0 0 10px 0;">${post.content}</p>
+        <p>${post.content}</p>
+        <small>ID: ${post.id}</small>
         <div class="post-actions">
-          <button class="action-btn" onclick="updatePost(${post.id}, 'likes', ${post.likes || 0})">
-            ❤️ ${post.likes || 0}
-          </button>
-          <button class="action-btn" onclick="reportPost(${post.id})">🚩 Melden</button>
+           <button class="action-btn" onclick="updatePost(${post.id}, 'likes', ${post.likes || 0})">❤️ ${post.likes || 0}</button>
         </div>
       </div>
     `;
