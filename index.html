@@ -51,10 +51,10 @@
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
-  const supabase = supabase.createClient("https://hyervxfeoxojlqlgasvn.supabase.co", "sb_publishable_skyTnFKezDqaz53FD8pTTQ_fpvSTSLi");
+  const supabaseClient = supabase.createClient("https://hyervxfeoxojlqlgasvn.supabase.co", "sb_publishable_skyTnFKezDqaz53FD8pTTQ_fpvSTSLi");
 
   async function loadPosts() {
-    const { data } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+    const { data } = await supabaseClient.from("posts").select("*").order("created_at", { ascending: false });
     const feed = document.getElementById("feed");
     feed.innerHTML = "";
 
@@ -72,7 +72,7 @@
   }
 
   async function updatePost(id, column, currentValue) {
-    await supabase.from("posts").update({ [column]: currentValue + 1 }).eq("id", id);
+    await supabaseClient.from("posts").update({ [column]: currentValue + 1 }).eq("id", id);
     loadPosts();
   }
 
@@ -86,14 +86,14 @@
   async function createPost() {
     const content = document.getElementById("postContent").value;
     if (!content.trim()) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    await supabase.from("posts").insert([{ content, user_id: session.user.id }]);
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    await supabaseClient.from("posts").insert([{ content, user_id: session.user.id }]);
     document.getElementById("postContent").value = "";
     loadPosts();
   }
 
   // Session-Check beim Laden
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  supabaseClient.auth.getSession().then(({ data: { session } }) => {
     if (!session) window.location.href = "login.html";
     else loadPosts();
   });
