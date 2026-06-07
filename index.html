@@ -36,6 +36,7 @@
   #postContent { flex: 1; height: 42px; border: none; outline: none; border-radius: 22px; padding: 12px 16px; font-size: 14px; background: rgba(255,255,255,0.08); color: white; }
   #composer button { width: 46px; height: 46px; border-radius: 50%; border: none; background: var(--accent-red); color: white; cursor: pointer; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>  
 </head>
 
 <body>
@@ -77,11 +78,15 @@
   }
 
   function reportPost(id) {
-    if (confirm("Beitrag melden?")) {
-      alert("Danke für den Hinweis. Der Beitrag wurde gemeldet.");
-      // Hier könnte zusätzlich eine Logik stehen, um den Report in der DB zu speichern
-    }
-  }
+  Swal.fire({
+    title: 'Beitrag gemeldet',
+    text: 'Vielen Dank, wir kümmern uns darum!',
+    icon: 'success',
+    background: '#181224',
+    color: '#fff',
+    confirmButtonColor: '#ff2a4b'
+  });
+}
 
   async function createPost() {
     const content = document.getElementById("postContent").value;
