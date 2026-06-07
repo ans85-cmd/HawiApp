@@ -53,24 +53,43 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
   const supabaseClient = supabase.createClient("https://hyervxfeoxojlqlgasvn.supabase.co", "sb_publishable_skyTnFKezDqaz53FD8pTTQ_fpvSTSLi");
+async function loadPosts() {
+  const { data } = await supabaseClient
+    .from("posts")
+    .select(`
+      *,
+      profiles (
+        username,
+        avatar_url
+      )
+    `)
+    .order("created_at", { ascending: false });
 
-  async function loadPosts() {
-    const { data } = await supabaseClient.from("posts").select("*").order("created_at", { ascending: false });
-    const feed = document.getElementById("feed");
-    feed.innerHTML = "";
+  const feed = document.getElementById("feed");
+  feed.innerHTML = "";
 
-    (data || []).forEach(post => {
-      feed.innerHTML += `
-        <div class="post">
-          <p>${post.content}</p>
-          <div class="post-actions">
-            <button class="action-btn" onclick="updatePost(${post.id}, 'likes', ${post.likes || 0})">❤️ ${post.likes || 0}</button>
-            <button class="action-btn" onclick="reportPost(${post.id})">🚩 Melden</button>
-          </div>
+  (data || []).forEach(post => {
+    // Wenn avatar_url leer ist, generieren wir einen Avatar mit den Initialen des Users
+    const username = post.profiles?.username || "Gast";
+    const avatar = post.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=ff2a4b&color=fff`;
+
+    feed.innerHTML += `
+      <div class="post">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+          <img src="${avatar}" style="width: 35px; height: 35px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1);">
+          <b style="font-size: 0.9em; color: #fff;">${username}</b>
         </div>
-      `;
-    });
-  }
+        <p style="margin: 0 0 10px 0;">${post.content}</p>
+        <div class="post-actions">
+          <button class="action-btn" onclick="updatePost(${post.id}, 'likes', ${post.likes || 0})">
+            ❤️ ${post.likes || 0}
+          </button>
+          <button class="action-btn" onclick="reportPost(${post.id})">🚩 Melden</button>
+        </div>
+      </div>
+    `;
+  });
+}
 
   async function updatePost(id, column, currentValue) {
     await supabaseClient.from("posts").update({ [column]: currentValue + 1 }).eq("id", id);
