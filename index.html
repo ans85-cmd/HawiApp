@@ -56,33 +56,41 @@
 async function loadPosts() {
   const feed = document.getElementById("feed");
   
-  // 1. Einfachster Test: Nur Posts laden (ohne Join)
+  // Wir fragen Post-Daten und Profil-Daten gleichzeitig ab
   const { data, error } = await supabaseClient
     .from("posts")
-    .select("*")
+    .select(`
+      id, 
+      content, 
+      likes, 
+      created_at,
+      profiles (username, avatar_url)
+    `)
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("DEBUG FEHLER:", error);
-    feed.innerHTML = `<p style="color:red">Fehler: ${error.message}</p>`;
+    console.error("Supabase FEHLER beim Laden:", error);
     return;
   }
 
   feed.innerHTML = "";
-  
-  if (!data || data.length === 0) {
-    feed.innerHTML = "<p>Keine Nachrichten gefunden.</p>";
-    return;
-  }
+  (data || []).forEach(post => {
+    // Hier greifen wir auf das "profiles"-Objekt zu, das Supabase bei einem Join mitliefert
+    const username = post.profiles?.username || "Gast";
+    const avatar = post.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`;
 
-  // 2. Daten anzeigen
-  data.forEach(post => {
     feed.innerHTML += `
       <div class="post">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+           <img src="${avatar}" style="width: 30px; height: 30px; border-radius: 50%;">
+           <b>${username}</b>
+        </div>
         <p>${post.content}</p>
-        <small>ID: ${post.id}</small>
         <div class="post-actions">
-           <button class="action-btn" onclick="updatePost(${post.id}, 'likes', ${post.likes || 0})">❤️ ${post.likes || 0}</button>
+           <button class="action-btn" onclick="updatePost(${post.id}, 'likes', ${post.likes || 0})">
+             ❤️ ${post.likes || 0}
+           </button>
+           <button class="action-btn" onclick="reportPost(${post.id})">🚩 Melden</button>
         </div>
       </div>
     `;
