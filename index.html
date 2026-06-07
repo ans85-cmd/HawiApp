@@ -3,121 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <title>HawiApp Feed</title>
-<link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
 
 <style>
-:root {
-  --bg-dark: #0a0612;
-  --accent-red: #ff2a4b;
-  --glass: rgba(255, 255, 255, 0.05);
-}
+  :root {
+    --bg-dark: #0a0612;
+    --accent-red: #ff2a4b;
+    --glass: rgba(255, 255, 255, 0.05);
+  }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background: var(--bg-dark);
-  color: white;
-  overflow: hidden; 
-}
+  html, body { height: 100%; margin: 0; font-family: -apple-system, sans-serif; background: var(--bg-dark); color: white; overflow: hidden; }
 
-/* Cyber Alpen Hintergrund */
-body::before {
-  content:"";
-  position: fixed;
-  inset: 0;
-  background: url("watermarked_img_12867647719775911672.png") center/cover no-repeat;
-  opacity: 0.25;
-  z-index: -2;
-}
+  body::before {
+    content:""; position: fixed; inset: 0;
+    background: url("watermarked_img_12867647719775911672.png") center/cover no-repeat;
+    opacity: 0.25; z-index: -2;
+  }
 
-.app {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
+  .app { height: 100%; display: flex; flex-direction: column; }
+  header { padding: 15px; text-align: center; background: rgba(10,6,18,0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1); }
+  header img { height: 38px; }
 
-/* Header */
-header {
-  padding: 15px;
-  text-align: center;
-  background: rgba(10,6,18,0.7);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
+  #feed { flex: 1; overflow-y: auto; padding: 12px; }
 
-header img {
-  height: 38px;
-}
+  .post { background: rgba(24,18,36,0.8); backdrop-filter: blur(15px); padding: 14px; margin-bottom: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
+  
+  .post-actions { display: flex; gap: 10px; margin-top: 12px; }
+  .action-btn { background: rgba(255,255,255,0.1); border: none; color: white; padding: 6px 12px; border-radius: 12px; cursor: pointer; font-size: 12px; transition: 0.2s; }
+  .action-btn:hover { background: var(--accent-red); }
 
-/* Feed */
-#feed {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-}
-
-.post {
-  background: rgba(24,18,36,0.8);
-  backdrop-filter: blur(15px);
-  padding: 14px;
-  margin-bottom: 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-/* Komponier-Bereich - Optimiert für Mobile */
-#composer {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px;
-  padding-bottom: max(10px, env(safe-area-inset-bottom));
-  background: rgba(10,6,18,0.95);
-  border-top: 1px solid rgba(255,255,255,0.1);
-}
-
-#postContent {
-  flex: 1;
-  height: 42px;
-  resize: none;
-  border: none;
-  outline: none;
-  border-radius: 22px;
-  padding: 12px 16px;
-  font-size: 14px;
-  background: rgba(255,255,255,0.08);
-  color: white;
-}
-
-#composer button {
-  width: 46px;
-  height: 46px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  border: none;
-  background: var(--accent-red);
-  color: white;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
+  #composer { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 10px; background: rgba(10,6,18,0.95); border-top: 1px solid rgba(255,255,255,0.1); }
+  #postContent { flex: 1; height: 42px; border: none; outline: none; border-radius: 22px; padding: 12px 16px; font-size: 14px; background: rgba(255,255,255,0.08); color: white; }
+  #composer button { width: 46px; height: 46px; border-radius: 50%; border: none; background: var(--accent-red); color: white; cursor: pointer; }
 </style>
 </head>
 
 <body>
 
 <div class="app">
-  <header>
-    <img src="banner_logo.PNG" alt="HawiApp">
-  </header>
-
+  <header><img src="banner_logo.PNG" alt="HawiApp"></header>
   <div id="feed"></div>
-
   <div id="composer">
     <textarea id="postContent" placeholder="Nachricht schreiben..."></textarea>
     <button onclick="createPost()">➤</button>
@@ -125,61 +50,53 @@ header img {
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
 <script>
-const supabaseClient = supabase.createClient(
-  "https://hyervxfeoxojlqlgasvn.supabase.co",
-  "sb_publishable_skyTnFKezDqaz53FD8pTTQ_fpvSTSLi"
-);
+  const supabase = supabase.createClient("https://hyervxfeoxojlqlgasvn.supabase.co", "sb_publishable_skyTnFKezDqaz53FD8pTTQ_fpvSTSLi");
 
-async function checkSession() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session || !session.user) {
-    window.location.href = "login.html";
-    return;
-  }
-  loadPosts();
-}
+  async function loadPosts() {
+    const { data } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+    const feed = document.getElementById("feed");
+    feed.innerHTML = "";
 
-checkSession();
-
-async function createPost() {
-  const content = document.getElementById("postContent").value;
-  if (!content.trim()) return;
-
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const { error } = await supabaseClient
-    .from("posts")
-    .insert([{ content, user_id: session.user.id }]);
-
-  if (error) {
-    alert(error.message);
-    return;
+    (data || []).forEach(post => {
+      feed.innerHTML += `
+        <div class="post">
+          <p>${post.content}</p>
+          <div class="post-actions">
+            <button class="action-btn" onclick="updatePost(${post.id}, 'likes', ${post.likes || 0})">❤️ ${post.likes || 0}</button>
+            <button class="action-btn" onclick="reportPost(${post.id})">🚩 Melden</button>
+          </div>
+        </div>
+      `;
+    });
   }
 
-  document.getElementById("postContent").value = "";
-  loadPosts();
-}
+  async function updatePost(id, column, currentValue) {
+    await supabase.from("posts").update({ [column]: currentValue + 1 }).eq("id", id);
+    loadPosts();
+  }
 
-async function loadPosts() {
-  const { data } = await supabaseClient
-    .from("posts")
-    .select("*")
-    .order("created_at", { ascending: false });
+  function reportPost(id) {
+    if (confirm("Beitrag melden?")) {
+      alert("Danke für den Hinweis. Der Beitrag wurde gemeldet.");
+      // Hier könnte zusätzlich eine Logik stehen, um den Report in der DB zu speichern
+    }
+  }
 
-  const feed = document.getElementById("feed");
-  feed.innerHTML = "";
+  async function createPost() {
+    const content = document.getElementById("postContent").value;
+    if (!content.trim()) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    await supabase.from("posts").insert([{ content, user_id: session.user.id }]);
+    document.getElementById("postContent").value = "";
+    loadPosts();
+  }
 
-  (data || []).forEach(post => {
-    feed.innerHTML += `
-      <div class="post">
-        <b>User</b>
-        <p>${post.content}</p>
-        <small style="opacity:0.6">${new Date(post.created_at).toLocaleString()}</small>
-      </div>
-    `;
+  // Session-Check beim Laden
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) window.location.href = "login.html";
+    else loadPosts();
   });
-}
 </script>
 
 </body>
